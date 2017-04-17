@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <link rel="stylesheet" href="./css/jquery-ui-1.11.3.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="./jquery/SlickGrid-2.3.2/slick.grid.css" type="text/css"/>
+    <link rel="stylesheet" href="./css/location.css" type="text/css"/>
+    
+    <style>
+        .slick-row {
+            line-height:16px;
+        }
+        .loading-indicator {
+            display: inline-block;
+            padding: 12px;
+            background: white;
+            -opacity: 0.5;
+            color: black;
+            font-weight: bold;
+            z-index: 9999;
+            border: 1px solid red;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            -moz-box-shadow: 0 0 5px red;
+            -webkit-box-shadow: 0px 0px 5px red;
+            -text-shadow: 1px 1px 1px white;
+        }
+        .loading-indicator label {
+            padding-left: 20px;
+            background: url('./images/ajax-loader-small.gif') no-repeat center left;
+        }
+    </style>
+</head>
+<body>
+<div id="msg"></div>
+<div style="width:1200px;float:left;">
+    <div class="grid-header" style="width:100%">
+        <label>Configuration Parameters</label>
+        <span style="float:right;display:inline-block;">
+          <button onclick="undo()"><img src="./images/arrow_undo.png" align="absmiddle"> Undo</button>
+        </span>
+    </div>
+	
+    <div id="myGrid" style="width:100%;height:700px;"></div>
+    <div id="pager" style="width:100%;height:20px;"></div>
+    <div id="command_buttons" style="width;100%;height:20px;">
+    	<input type="button" id="submit_updates" name="submit_updates" value="Submit" />
+    </div>
+</div>
+
+
+<script src="./jquery/firebugx.js"></script>
+<script src="./jquery/jquery-1.11.2.js"></script>
+<script src="./jquery/jquery-ui-1.11.3.js"></script>
+<script src="./jquery/jquery.event.drag-2.3.0.js"></script>
+<script src="./jquery/jquery.jsonp-2.4.min.js"></script>
+
+<script src="./jquery/SlickGrid-2.3.2/slick.core.js"></script>
+<script src="./jquery/SlickGrid-2.3.2/slick.formatters.js"></script>
+<script src="./jquery/SlickGrid-2.3.2/slick.editors.js"></script>
+<script src="./jquery/SlickGrid-2.3.2/slick.grid.js"></script>
+
+<script src="./slick.location.model.js"></script>
+<script>
+	function requiredFieldValidator(value) {
+		if (value == null || value == undefined || !value.length) {
+		  return {valid: false, msg: "This is a required field"};
+		} else {
+		  return {valid: true, msg: null};
+		}
+    }
+
+  
+    var grid, s;
+    var loader = new Slick.Data.RemoteModel();
+    var idFormatter = function (row, cell, value, columnDef, dataContext) {
+        return dataContext.id
+    };
+    var nameFormatter = function (row, cell, value, columnDef, dataContext) {
+        return dataContext.name;
+    };
+	var addressFormatter = function (row, cell, value, columnDef, dataContext) {
+        return dataContext.address;
+    };
+    var columns = [
+        {id: "id", name: "ID", field: "id", formatter: idFormatter, width: 50, sortable: true, cssClass : "right-align"},
+        {id: "name", name: "Name", field: "name", formatter: nameFormatter, width: 100, sortable: true},
+		{id: "address", name: "Address", field: "address", formatter: addressFormatter, width: 300, sortable: true},
+        {id: "desciption", name: "Desciption", field: "desciption", width: 700, editor: Slick.Editors.Text, validator: requiredFieldValidator },
+    ];
+    var options = {
+        rowHeight: 21,
+        editable: true,
+        enableAddRow: false,
+        enableCellNavigation: true,
+		asyncEditorLoading: false,
+		autoEdit: false,
+		editCommandHandler: queueAndExecuteCommand
+    };
+	
+	var commandQueue = [];
+
+    function queueAndExecuteCommand(item, column, editCommand) {
+		commandQueue.push(editCommand);
+		editCommand.execute();
+	}
+
+	function undo() {
+		var command = commandQueue.pop();
+		if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+		  command.undo();
+		  grid.gotoCell(command.row, command.cell, false);
+		}
+		
+		grid.removeClassFromCell("modified", modifiedCells);
+	    modifiedCells = {};
+	}
+	  
+    var loadingIndicator = null;
+    var modifiedCells = {};
+    
+    $("#submit_updates").click(function(){
+    	console.log('submit updates to server by PUT updateConfigurationParameters');
+        console.log(grid);
+        
+        var locationArray = [];
+        for (var i = 0; i < 3; i++) {
+        	locationArray[i] = grid.getDataItem(i);
+        	//the index property is added by SlickGrid which is not in the java class
+        	delete locationArray[i].index;
+        }
+        $.ajax({
+            type : 'PUT',
+            url : 'rest/updateLocations',
+            contentType: 'application/json',
+            data : JSON.stringify(locationArray),
+            success : function(data, status, xhr){
+                $('#msg').html('status: '+status+
+                '<br/>Header Location value: '+
+                 xhr.getResponseHeader('Location'));
+            },
+            error: function(xhr, status, error){
+            	$('#msg').html('<span style=\'color:red;\'>'+error+'</span>')
+            }
+        });
+        
+    });
+    
+    $(function () {
+        grid = new Slick.Grid("#myGrid", loader.data, columns, options);
+        grid.onViewportChanged.subscribe(function (e, args) {
+            var vp = grid.getViewport();
+            loader.ensureData(vp.top, vp.bottom);
+        });
+        grid.onSort.subscribe(function (e, args) {
+            var vp = grid.getViewport();
+            loader.ensureData(vp.top, vp.bottom);
+        });
+        grid.onBeforeEditCell.subscribe(function(e,args) {
+        	if (grid.getDataItem(args['row'])['updateable'] == 'N') {
+        	    return false;
+        	}
+        });
+        grid.onCellChange.subscribe(function (e, args) {
+            if (!modifiedCells[args.row]) {
+                modifiedCells[args.row] = {};
+            }
+            modifiedCells[args.row][this.getColumns()[args.cell].id] = "slick-cell-modified";
+            this.addClassToCell("modified", modifiedCells);
+        });
+        
+        loader.onDataLoading.subscribe(function () {
+            if (!loadingIndicator) {
+                loadingIndicator = $("<span class='loading-indicator'><label>Buffering...</label></span>").appendTo(document.body);
+                var $g = $("#myGrid");
+                loadingIndicator
+                        .css("position", "absolute")
+                        .css("top", $g.position().top + $g.height() / 2 - loadingIndicator.height() / 2)
+                        .css("left", $g.position().left + $g.width() / 2 - loadingIndicator.width() / 2);
+            }
+            loadingIndicator.show();
+        });
+        loader.onDataLoaded.subscribe(function (e, args) {
+            for (var i = args.from; i <= args.to; i++) {
+                grid.invalidateRow(i);
+            }
+            grid.updateRowCount();
+            grid.render();
+            loadingIndicator.fadeOut();
+        });
+        $("#txtSearch").keyup(function (e) {
+            if (e.which == 13) {
+                loader.setSearch($(this).val());
+                var vp = grid.getViewport();
+                loader.ensureData(vp.top, vp.bottom);
+            }
+        });
+        loader.setSearch($("#txtSearch").val());
+        // load the first page
+        grid.onViewportChanged.notify();
+    })
+</script>
+</body>
+</html>

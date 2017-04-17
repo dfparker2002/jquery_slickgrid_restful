@@ -1,0 +1,47 @@
+{
+  "status" : 200,
+  "msg" : "SUCCESS",
+  "result" : [ {
+    "id" : 1,
+    "name" : "name 1",
+    "address" : "address 1",
+    "description" : "desc 1",
+    "updateable" : "Y"
+  }, {
+    "id" : 2,
+    "name" : "name 2",
+    "address" : "address 2",
+    "description" : "desc 2",
+    "updateable" : "Y"
+  }, {
+    "id" : 3,
+    "name" : "name 3",
+    "address" : "address 3",
+    "description" : "desc 3",
+    "updateable" : "N"
+  }, {
+    "id" : 4,
+    "name" : "name 4",
+    "address" : "address 4",
+    "description" : "desc 4",
+    "updateable" : "Y"
+  }, {
+    "id" : 5,
+    "name" : "name 5",
+    "address" : "address 5",
+    "description" : "desc 5",
+    "updateable" : "N"
+  }, {
+    "id" : 6,
+    "name" : "name 6",
+    "address" : "address 6",
+    "description" : "desc 6",
+    "updateable" : "Y"
+  }, {
+    "id" : 7,
+    "name" : "name 7",
+    "address" : "address 7",
+    "description" : "desc 7",
+    "updateable" : "Y"
+  } ]
+}

@@ -1,0 +1,5 @@
+build/
+ConfigurationParameterVO.java
+cp.json
+configuration_parameters.html
+*.configuration.parameter.model.js
