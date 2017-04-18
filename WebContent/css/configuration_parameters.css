@@ -231,6 +231,20 @@ input.editor-checkbox {
 	text-align: right;
 }
 
+.slick-cell-readonly {
+	background-color: blue;
+}
+
 .slick-cell-modified {
 	background-color: yellow;
+}
+
+span.cellWithoutBackground
+{
+    display:block;
+    background-image:none;
+    margin-right:-2px;
+    margin-left:-2px;
+    height:14px;
+    padding:4px;
 }
