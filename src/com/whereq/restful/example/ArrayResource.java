@@ -59,8 +59,10 @@ public class ArrayResource {
 		ResponseVO<Identifiable> response = new ResponseVO<Identifiable>();
     	ResponseResultVOList<Identifiable> responseList = new ResponseResultVOList<Identifiable>();
 		responseList.addAll(list);
+
 		response.setResult(responseList);
-		WebserviceUtils.markSuccess(response);
+		WebserviceUtils.markSuccess(response, "Put is done");
+		
 		return response;
 	}
     

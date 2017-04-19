@@ -14,6 +14,11 @@ public class WebserviceUtils {
 		responseVO.setStatus(SUCCESS_CODE);
 	}
 	
+	public static void markSuccess(ResponseVO responseVO, String msg){
+		responseVO.setMsg(msg);
+		responseVO.setStatus(SUCCESS_CODE);
+	}
+	
 	public static void markFailure(ResponseVO responseVO, Exception e){
 		responseVO.setStatus(FAILURE_CODE);
 		responseVO.setMsg(e.getMessage());
